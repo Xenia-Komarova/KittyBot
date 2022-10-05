@@ -1,14 +1,25 @@
 import requests
 import datetime
+import os
+from dotenv import load_dotenv
 from telegram.ext import CommandHandler, Filters, MessageHandler, Updater
 from telegram import ReplyKeyboardMarkup
 
+load_dotenv()
 
-updater = Updater(token='5519495382:AAEEDWKhxsOabr8S40p5z8A5sw22sjNmFgw')
+secret_token = os.getenv('TOKEN')
+
 URL = 'https://api.thecatapi.com/v1/images/search'
 
 
 def get_new_image():
+    try:
+        response = requests.get(URL)
+    except Exception as error:
+        print(error)
+        new_url = 'https://api.thedogapi.com/v1/images/search'
+        response = requests.get(new_url)
+
     response = requests.get(URL).json()
     random_cat = response[0].get('url')
     return random_cat
@@ -51,10 +62,18 @@ def wake_up(update, context):
 # Регистрируется обработчик CommandHandler;
 # он будет отфильтровывать только сообщения с содержимым '/start'
 # и передавать их в функцию wake_up()
-updater.dispatcher.add_handler(CommandHandler('start', wake_up))
-updater.dispatcher.add_handler(CommandHandler('newcat', new_cat))
-updater.dispatcher.add_handler(CommandHandler('what_time', whats_time))
-updater.dispatcher.add_handler(CommandHandler('my_id', my_id))
-updater.dispatcher.add_handler(MessageHandler(Filters.text, say_hi))
-updater.start_polling()
-updater.idle()
+
+def main():
+    updater = Updater(token=secret_token)
+
+    updater.dispatcher.add_handler(CommandHandler('start', wake_up))
+    updater.dispatcher.add_handler(CommandHandler('newcat', new_cat))
+    updater.dispatcher.add_handler(CommandHandler('what_time', whats_time))
+    updater.dispatcher.add_handler(CommandHandler('my_id', my_id))
+    updater.dispatcher.add_handler(MessageHandler(Filters.text, say_hi))
+
+    updater.start_polling()
+    updater.idle()
+
+if __name__ == '__main__':
+    main()
